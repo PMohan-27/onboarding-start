@@ -11,9 +11,14 @@ You can also include images in this folder and reference them in the markdown. E
 
 Explain how your project works
 
+SPI (write only) controls a PWM Peripheral. 
+
+
 ## How to test
 
 Explain how to use your project
+
+look in test.
 
 ## External hardware
 
