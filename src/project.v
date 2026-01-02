@@ -17,8 +17,8 @@ module tt_um_uwasic_onboarding_parasinder_m (
 );
 
   // All output pins must be assigned. If not used, assign to 0.
-  assign uo_out  = ui_in + uio_in;  // Example: ou_out is the sum of ui_in and uio_in 
-  assign uio_out = 0;
+  // assign uo_out  = 8'b11111111;  // Example: ou_out is the sum of ui_in and uio_in 
+  // assign uio_out = 0;
   
   assign uio_oe  = 8'hFF;
 
@@ -27,8 +27,19 @@ module tt_um_uwasic_onboarding_parasinder_m (
   wire [7:0] en_reg_pwm_7_0;
   wire [7:0] en_reg_pwm_15_8;
   wire [7:0] pwm_duty_cycle;
-  // List all unused inputs to prevent warnings
 
+  spi_peripheral spi_peripheral_inst (
+    .SCLK(ui_in[0]),
+    .nCS(ui_in[2]),
+    .COPI(ui_in[1]),
+    .clk(clk),
+    .rst_n(rst_n),
+    .EN_REG_OUT_7_0(en_reg_out_7_0),
+    .EN_REG_OUT_15_8(en_reg_out_15_8),
+    .EN_REG_PWM_7_0(en_reg_pwm_7_0),
+    .EN_REG_PWM_15_8(en_reg_pwm_15_8),
+    .PWM_DUTY_CYCLE(pwm_duty_cycle)
+  );
 
    pwm_peripheral pwm_peripheral_inst (
     .clk(clk),
@@ -41,6 +52,9 @@ module tt_um_uwasic_onboarding_parasinder_m (
     .out({uio_out, uo_out})
   );
 
+  
+  // List all unused inputs to prevent warnings
+  
   wire _unused = &{ena, clk, rst_n, 1'b0, uio_in, ui_in[7:3]};
 
 endmodule

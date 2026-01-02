@@ -18,7 +18,7 @@ SPI (write only) controls a PWM Peripheral.
 
 Explain how to use your project
 
-\test has test instructions.
+\test directory has testing instructions.
 
 ## External hardware
 
