@@ -77,11 +77,11 @@ module spi_peripheral(
 
             if(bit_counter == 5'b10000 && data[15] == 1)begin
                 case(data[14:8])
-                2'h0: EN_REG_OUT_7_0 <= data[7:0];
-                2'h1: EN_REG_OUT_15_8 <= data[7:0];
-                2'h2: EN_REG_PWM_7_0 <= data[7:0];
-                2'h3: EN_REG_PWM_15_8 <= data[7:0];
-                2'h4: PWM_DUTY_CYCLE <= data[7:0];
+                7'h0: EN_REG_OUT_7_0 <= data[7:0];
+                7'h1: EN_REG_OUT_15_8 <= data[7:0];
+                7'h2: EN_REG_PWM_7_0 <= data[7:0];
+                7'h3: EN_REG_PWM_15_8 <= data[7:0];
+                7'h4: PWM_DUTY_CYCLE <= data[7:0];
 
                 endcase
             end
