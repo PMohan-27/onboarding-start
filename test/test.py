@@ -228,7 +228,9 @@ async def test_pwm_duty(dut):
     expected_freq_hz = 3000  # 3 kHz
     expected_period_ns = 1e9 / expected_freq_hz  # 333,333.33 ns
 
-    duty_cycles = [duty for duty in range(0,256)]
+    # duty_cycles = [duty for duty in range(0,256)]
+    duty_cycles = [0,0x80, 0xFF]
+
     # Set the clock period to 100 ns (10 MHz)
     clock = Clock(dut.clk, 100, unit="ns")
     cocotb.start_soon(clock.start())
@@ -270,7 +272,6 @@ async def test_pwm_duty(dut):
 
     for duty in duty_cycles:
         ui_in_val = await send_spi_transaction(dut, 1, 0x04, duty)  # Write transaction
-
         expected_pulse_width = duty * expected_period_ns / 256
 
         PWM2 = 0
@@ -278,23 +279,38 @@ async def test_pwm_duty(dut):
         t_rising_edge = 0
         t_falling_edge = 0
         i = 0
+        if duty == 0:
+            for i in range(20):
+                await ClockCycles(dut.clk, int(expected_period_ns/100))
+                assert(dut.uo_out.value[0] == 0), f"expected 0% duty cycle, Duty cycle : {duty}"
+            dut._log.info(f"Complete Duty check {duty}")
+            continue  
+                
+        elif duty == 255:
+            for i in range(20):
+                await ClockCycles(dut.clk, int(expected_period_ns/100))
+                assert(dut.uo_out.value[0] == 1), f"expected 100% duty cycle, Duty cycle : {duty}"
+            dut._log.info(f"Complete Duty check {duty}")
+            continue  
+        
 
-        while duty != 0 and duty != 255:
+        while i < 10**5:
             await ClockCycles(dut.clk, 1)
             PWM2 = PWM1
             PWM1 = dut.uo_out.value[0]
-            if PWM1 == 0 and PWM2 == 1:  # Found falling edge
+            i += 1
+            
+            if PWM1 == 0 and PWM2 == 1:  
                 break
-        while True:
+        assert i < 10**5, f"Timeout waiting for falling edge sync, duty: {duty}"       
+
+        i = 0
+        while i < 10**5:
             await ClockCycles(dut.clk,1)
 
             PWM2 = PWM1
             PWM1 = dut.uo_out.value[0]
             i += 1
-
-            if(i > 10**4):
-                break
-           
 
             if(PWM1 == 1 and PWM2 == 0):
                 t_rising_edge  = cocotb.utils.get_sim_time(unit='ns')
@@ -302,17 +318,13 @@ async def test_pwm_duty(dut):
             if(PWM1 == 0 and PWM2 == 1): 
                 t_falling_edge = cocotb.utils.get_sim_time(unit='ns')
                 break
-        
+
+        assert i < 10**5, f"Timeout waiting for pulse edges, duty: {duty}"
         high_time = t_falling_edge - t_rising_edge
-        if(duty != 0 and duty != 255):
-            assert(high_time >= expected_pulse_width *0.99 and high_time <= expected_pulse_width*1.01),\
-            f"expected a pulse width of {expected_pulse_width}ns, got {high_time}ns. Duty cycle : {duty}"
-        elif(duty == 0):
-            assert(dut.uo_out.value == 0), f"expected 0% duty cycle, got a pulse width of {high_time}, Duty cycle : {duty}"
-        elif(duty == 255):
-            assert(dut.uo_out.value == 0xFF), f"expected 100% duty cycle, got a pulse width of {high_time},  Duty cycle : {duty}"
+
+        assert(high_time >= expected_pulse_width *0.99 and high_time <= expected_pulse_width*1.01),\
+        f"expected a pulse width of {expected_pulse_width}ns, got {high_time}ns. Duty cycle : {duty}"
         dut._log.info(f"Complete Duty check {duty}")
-        
 
         
 

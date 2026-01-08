@@ -82,7 +82,7 @@ module spi_peripheral(
                 7'h2: EN_REG_PWM_7_0 <= data[7:0];
                 7'h3: EN_REG_PWM_15_8 <= data[7:0];
                 7'h4: PWM_DUTY_CYCLE <= data[7:0];
-
+                default: ;
                 endcase
             end
         end

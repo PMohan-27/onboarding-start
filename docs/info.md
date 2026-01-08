@@ -9,17 +9,17 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+This project is an SPI-controlled PWM generator. It receives configuration commands via SPI (Mode 0, write-only) and outputs PWM signals on 8 channels.
 
-SPI (write only) controls a PWM Peripheral. 
+The SPI interface uses a 16-bit transaction format: 1 R/W bit + 7-bit address + 8-bit data. (Read values will be ignored.) Five registers control output enables (0x00, 0x01), PWM enables (0x02, 0x03), and duty cycle (0x04). The PWM runs at 3 kHz with 8-bit resolution (0-255).
 
+Each output can be disabled (forced low), enabled as static high, or enabled as PWM based on the enable register settings. All enabled PWM registers share the same duty cycle.
 
 ## How to test
 
-Explain how to use your project
+Run the cocotb tests in the `test/` directory:
 
-\test directory has testing instructions.
+cd test 
+make -B
 
-## External hardware
-
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+Three tests verify SPI communication, PWM frequency (3 kHz ±1%), and duty cycle accuracy across values in the duty cycle array. All tests should pass.
