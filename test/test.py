@@ -144,19 +144,178 @@ async def test_spi(dut):
     ui_in_val = await send_spi_transaction(dut, 1, 0x04, 0x00)  # Write transaction
     await ClockCycles(dut.clk, 30000)
 
-    dut._log.info("Write transaction, address 0x04, data 0x01")
-    ui_in_val = await send_spi_transaction(dut, 1, 0x04, 0x01)  # Write transaction
-    await ClockCycles(dut.clk, 30000)
 
     dut._log.info("SPI test completed successfully")
 
 @cocotb.test()
 async def test_pwm_freq(dut):
     # Write your test here
+    expected_freq_hz = 3000  # 3 kHz
+    expected_period_ns = 1e9 / expected_freq_hz  # 333,333.33 ns
+
+    # Set the clock period to 100 ns (10 MHz)
+    clock = Clock(dut.clk, 100, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    dut._log.info("Write transaction, address 0x00, data 0xFF")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x00, 0xFF)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+
+    dut._log.info("Write transaction, address 0x01, data 0xFF")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x01, 0xFF)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+
+    dut._log.info("Write transaction, address 0x02, data 0xFF")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x02, 0xFF)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+
+    dut._log.info("Write transaction, address 0x03, data 0xFF")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x03, 0xFF)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+
+    dut._log.info(f"Write transaction, address 0x04, data 0xC1")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x04, 0xC1)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+    
+    duty_rising_edge_times = [0,0]
+    
+    PWM2 = 0
+    PWM1 = 0
+    
+    for a in range(0,2):
+        i = 0
+        while True: 
+            await ClockCycles(dut.clk,1)
+
+            PWM2 = PWM1
+            PWM1 = dut.uo_out.value[0]
+            i += 1
+
+            if(i > 10**5):
+                break
+
+            if(PWM1 == 1 and PWM2 == 0):
+                duty_rising_edge_times[a] = cocotb.utils.get_sim_time(unit='ns')
+            
+            if(PWM1 == 0 and PWM2 == 1): 
+                break
+            
+        
+    period = duty_rising_edge_times[1] - duty_rising_edge_times[0]
+    
+    assert (period >= 0.99*expected_period_ns and period <= 1.01*expected_period_ns), \
+    f"expected period was {expected_period_ns} ± 1%, got a period of {period}"
+
     dut._log.info("PWM Frequency test completed successfully")
+    
 
 
 @cocotb.test()
 async def test_pwm_duty(dut):
     # Write your test here
+    expected_freq_hz = 3000  # 3 kHz
+    expected_period_ns = 1e9 / expected_freq_hz  # 333,333.33 ns
+
+    duty_cycles = [duty for duty in range(0,256)]
+    # Set the clock period to 100 ns (10 MHz)
+    clock = Clock(dut.clk, 100, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    
+
+    dut._log.info("Write transaction, address 0x01, data 0xFF")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x01, 0xFF)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+    
+    dut._log.info("Write transaction, address 0x02, data 0xFF")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x02, 0xFF)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+
+    dut._log.info("Write transaction, address 0x00, data 0xFF")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x00, 0xFF)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+
+
+    dut._log.info("Write transaction, address 0x03, data 0xFF")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x03, 0xFF)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+
+    dut._log.info(f"Write transaction, address 0x04, data 0x00")
+    ui_in_val = await send_spi_transaction(dut, 1, 0x04, 0x00)  # Write transaction
+    await ClockCycles(dut.clk, 3000)
+
+    for duty in duty_cycles:
+        ui_in_val = await send_spi_transaction(dut, 1, 0x04, duty)  # Write transaction
+
+        expected_pulse_width = duty * expected_period_ns / 256
+
+        PWM2 = 0
+        PWM1 = 0
+        t_rising_edge = 0
+        t_falling_edge = 0
+        i = 0
+
+        while duty != 0 and duty != 255:
+            await ClockCycles(dut.clk, 1)
+            PWM2 = PWM1
+            PWM1 = dut.uo_out.value[0]
+            if PWM1 == 0 and PWM2 == 1:  # Found falling edge
+                break
+        while True:
+            await ClockCycles(dut.clk,1)
+
+            PWM2 = PWM1
+            PWM1 = dut.uo_out.value[0]
+            i += 1
+
+            if(i > 10**4):
+                break
+           
+
+            if(PWM1 == 1 and PWM2 == 0):
+                t_rising_edge  = cocotb.utils.get_sim_time(unit='ns')
+            
+            if(PWM1 == 0 and PWM2 == 1): 
+                t_falling_edge = cocotb.utils.get_sim_time(unit='ns')
+                break
+        
+        high_time = t_falling_edge - t_rising_edge
+        if(duty != 0 and duty != 255):
+            assert(high_time >= expected_pulse_width *0.99 and high_time <= expected_pulse_width*1.01),\
+            f"expected a pulse width of {expected_pulse_width}ns, got {high_time}ns. Duty cycle : {duty}"
+        elif(duty == 0):
+            assert(dut.uo_out.value == 0), f"expected 0% duty cycle, got a pulse width of {high_time}, Duty cycle : {duty}"
+        elif(duty == 255):
+            assert(dut.uo_out.value == 0xFF), f"expected 100% duty cycle, got a pulse width of {high_time},  Duty cycle : {duty}"
+        dut._log.info(f"Complete Duty check {duty}")
+        
+
+        
+
+
     dut._log.info("PWM Duty Cycle test completed successfully")
+    

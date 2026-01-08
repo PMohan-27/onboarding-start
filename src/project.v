@@ -27,7 +27,8 @@ module tt_um_uwasic_onboarding_parasinder_m (
   wire [7:0] en_reg_pwm_7_0;
   wire [7:0] en_reg_pwm_15_8;
   wire [7:0] pwm_duty_cycle;
-
+  wire [15:0] out;
+  assign out = {uio_out, uo_out};
   spi_peripheral spi_peripheral_inst (
     .SCLK(ui_in[0]),
     .nCS(ui_in[2]),
