@@ -11,11 +11,11 @@ from cocotb.types import LogicArray
 
 async def await_half_sclk(dut):
     """Wait for the SCLK signal to go high or low."""
-    start_time = cocotb.utils.get_sim_time(unit="ns")
+    start_time = cocotb.utils.get_sim_time(units="ns")
     while True:
         await ClockCycles(dut.clk, 1)
         # Wait for half of the SCLK period (10 us)
-        if (start_time + 100*100*0.5) < cocotb.utils.get_sim_time(unit="ns"):
+        if (start_time + 100*100*0.5) < cocotb.utils.get_sim_time(units="ns"):
             break
     return
 
@@ -89,7 +89,7 @@ async def test_spi(dut):
     dut._log.info("Start SPI test")
 
     # Set the clock period to 100 ns (10 MHz)
-    clock = Clock(dut.clk, 100, unit="ns")
+    clock = Clock(dut.clk, 100, units="ns")
     cocotb.start_soon(clock.start())
 
     # Reset
@@ -154,7 +154,7 @@ async def test_pwm_freq(dut):
     expected_period_ns = 1e9 / expected_freq_hz  # 333,333.33 ns
 
     # Set the clock period to 100 ns (10 MHz)
-    clock = Clock(dut.clk, 100, unit="ns")
+    clock = Clock(dut.clk, 100, units="ns")
     cocotb.start_soon(clock.start())
 
     # Reset
@@ -207,7 +207,7 @@ async def test_pwm_freq(dut):
                 break
 
             if(PWM1 == 1 and PWM2 == 0):
-                duty_rising_edge_times[a] = cocotb.utils.get_sim_time(unit='ns')
+                duty_rising_edge_times[a] = cocotb.utils.get_sim_time(units='ns')
             
             if(PWM1 == 0 and PWM2 == 1): 
                 break
@@ -232,7 +232,7 @@ async def test_pwm_duty(dut):
     duty_cycles = [0,0x80, 0xFF]
 
     # Set the clock period to 100 ns (10 MHz)
-    clock = Clock(dut.clk, 100, unit="ns")
+    clock = Clock(dut.clk, 100, units="ns")
     cocotb.start_soon(clock.start())
 
     # Reset
@@ -313,10 +313,10 @@ async def test_pwm_duty(dut):
             i += 1
 
             if(PWM1 == 1 and PWM2 == 0):
-                t_rising_edge  = cocotb.utils.get_sim_time(unit='ns')
+                t_rising_edge  = cocotb.utils.get_sim_time(units='ns')
             
             if(PWM1 == 0 and PWM2 == 1): 
-                t_falling_edge = cocotb.utils.get_sim_time(unit='ns')
+                t_falling_edge = cocotb.utils.get_sim_time(units='ns')
                 break
 
         assert i < 10**5, f"Timeout waiting for pulse edges, duty: {duty}"
